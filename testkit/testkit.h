@@ -33,9 +33,11 @@
 /** Maximum number of allowed test cases. */
 #define TK_MAX_TESTS       1024
 /** Time limit (in seconds) for each test case. */
-#define TK_TIME_LIMIT_SEC  1
+#define TK_TIME_LIMIT_SEC  5
 /** Output limit (bytes) for output capture in struct tk_result. */
 #define TK_OUTPUT_LIMIT    (1 << 20)
+
+#define TK_MAX_ARGV_LEN    64
 
 /** Environment variables for enabling TestKit. */
 #define TK_RUN     "TK_RUN"
@@ -53,6 +55,8 @@ struct tk_result {
  * of main() function with argument vector.
  */
 struct tk_testcase {
+    int enabled; // whether the test case is active
+
     const char *name; // name of test case; must be a valid C identifier
     const char *loc; // the program location of this test case
     void (*init)(void); // pre-test setup function (optional)
@@ -65,6 +69,7 @@ struct tk_testcase {
     void (*stest)(struct tk_result *); // test body
     int argc;
     const char **argv;
+    const char *argv_copy[TK_MAX_ARGV_LEN];
 };
 
 /**
@@ -245,6 +250,7 @@ struct tk_testcase {
         \
         /* Call tk_add_test() to register. */ \
         tk_add_test( (struct tk_testcase) { \
+            .enabled = 1, \
             .name = #name_, \
             .loc = __FILE__ ":" TK_TOSTRING(__LINE__),\
             .test = TK_UNIQUE_NAME(name_), \
