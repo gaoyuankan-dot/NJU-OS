@@ -1,23 +1,22 @@
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <assert.h>
 #include <testkit.h>
 #include "labyrinth.h"
 
+void printUsage(void);
 
 int main(int argc, char *argv[]) {
     // --version must be the sole argument
     if (argc >= 2 && strcmp(argv[1], "--version") == 0) {
-        // Note value returned to command, 0 is true
         if (argc != 2) return 1;
         printf("%s\n", VERSION_INFO);
         return 0;
     }
 
     char *mapFile = NULL, *playerStr = NULL, *moveDir = NULL;
-    // Maybe getopt is better to handle options, argument and operands
     for (int i = 1; i < argc; i++) {
         if ((strcmp(argv[i], "--map") == 0 || strcmp(argv[i], "-m") == 0) && i + 1 < argc)
             mapFile = argv[++i];
@@ -25,25 +24,16 @@ int main(int argc, char *argv[]) {
             playerStr = argv[++i];
         else if (strcmp(argv[i], "--move") == 0 && i + 1 < argc)
             moveDir = argv[++i];
-        else {
-            printUsage();
-            return 1;
-        }
+        else { printUsage(); return 1; }
     }
 
-    if (!mapFile || !playerStr) {
-        printUsage();
-        return 1;
-    }
-    if (strlen(playerStr) != 1 || !isValidPlayer(playerStr[0]))
-        return 1;
+    if (!mapFile || !playerStr) { printUsage(); return 1; }
+    if (strlen(playerStr) != 1 || !isValidPlayer(playerStr[0])) return 1;
     char playerId = playerStr[0];
 
     Labyrinth labyrinth;
-    if (!loadMap(&labyrinth, mapFile))
-        return 1;
-    if (!isConnected(&labyrinth))
-        return 1;
+    if (!loadMap(&labyrinth, mapFile)) return 1;
+    if (!isConnected(&labyrinth)) return 1;
 
     if (moveDir) {
         // Spawn player at first empty space if not on map
@@ -53,10 +43,8 @@ int main(int argc, char *argv[]) {
             labyrinth.map[spawn.row][spawn.col] = playerId;
         }
         // Only save on successful move
-        if (!movePlayer(&labyrinth, playerId, moveDir))
-            return 1;
-        if (!saveMap(&labyrinth, mapFile))
-            return 1;
+        if (!movePlayer(&labyrinth, playerId, moveDir)) return 1;
+        if (!saveMap(&labyrinth, mapFile)) return 1;
     } else {
         for (int r = 0; r < labyrinth.rows; r++)
             printf("%s\n", labyrinth.map[r]);
@@ -83,9 +71,7 @@ bool loadMap(Labyrinth *labyrinth, const char *filename) {
     int rows = 0, cols = -1;
     char line[MAX_COLS + 2]; // +1 for '\n', +1 for '\0'
 
-    // If a newline is read, it is stored into the fgets(char*, size_t, File*); buffer.
     while (fgets(line, sizeof(line), f) && rows < MAX_ROWS) {
-        // size_t strlen(const char*); excludes '\0' null char
         int len = (int)strlen(line);
         if (len > 0 && line[len - 1] == '\n') line[--len] = '\0';
 
@@ -148,16 +134,11 @@ bool movePlayer(Labyrinth *labyrinth, char playerId, const char *direction) {
 
 bool saveMap(Labyrinth *labyrinth, const char *filename) {
     FILE *f = fopen(filename, "w");
-    // Good habit to check err
     if (!f) return false;
-
     for (int r = 0; r < labyrinth->rows; r++) {
         fputs(labyrinth->map[r], f);
-        // Note this detail
         fputc('\n', f);
     }
-
-    // why RAII shines
     fclose(f);
     return true;
 }
@@ -176,23 +157,18 @@ void dfs(Labyrinth *labyrinth, int row, int col, bool visited[MAX_ROWS][MAX_COLS
 bool isConnected(Labyrinth *labyrinth) {
     bool visited[MAX_ROWS][MAX_COLS] = {false};
 
-    // Seed DFS from the first non-wall cell from upper-left corner to bottom-right
+    // Seed DFS from the first non-wall cell
     int sr = -1, sc = -1;
     for (int r = 0; r < labyrinth->rows && sr == -1; r++)
         for (int c = 0; c < labyrinth->cols && sr == -1; c++)
-            if (labyrinth->map[r][c] != '#') {
-                sr = r; sc = c;
-            }
+            if (labyrinth->map[r][c] != '#') { sr = r; sc = c; }
 
-    // all walls — trivially connected
-    if (sr == -1)
-        return true;
+    if (sr == -1) return true; // all walls — trivially connected
     dfs(labyrinth, sr, sc, visited);
 
     // Every non-wall cell must have been reached
     for (int r = 0; r < labyrinth->rows; r++)
         for (int c = 0; c < labyrinth->cols; c++)
-            if (labyrinth->map[r][c] != '#' && !visited[r][c])
-                return false;
+            if (labyrinth->map[r][c] != '#' && !visited[r][c]) return false;
     return true;
 }

@@ -3,6 +3,6 @@
 !.gitignore
 !*.c
 !*.h
-!*.md
+*.md
 !Makefile
 !*.py
