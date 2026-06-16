@@ -6,6 +6,8 @@
 #include <testkit.h>
 #include "labyrinth.h"
 
+void printUsage(void);
+
 int main(int argc, char *argv[]) {
     // --version must be the sole argument
     if (argc >= 2 && strcmp(argv[1], "--version") == 0) {
