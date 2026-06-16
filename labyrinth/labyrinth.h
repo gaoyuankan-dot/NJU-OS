@@ -14,6 +14,7 @@ typedef struct {
 } Position;
 
 
+void printUsage(void);
 bool isValidPlayer(char playerId);
 bool loadMap(Labyrinth *labyrinth, const char *filename);
 Position findPlayer(Labyrinth *labyrinth, char playerId);

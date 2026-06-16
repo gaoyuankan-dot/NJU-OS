@@ -1,5 +1,6 @@
 NAME := $(shell basename $(PWD))
 export MODULE := M1
+
 all: $(NAME)
 
 # Always read them
